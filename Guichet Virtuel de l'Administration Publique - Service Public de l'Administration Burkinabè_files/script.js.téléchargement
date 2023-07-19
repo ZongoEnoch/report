@@ -1,0 +1,122 @@
+"use strict";
+
+// Initialisation Materializecss Composants
+$('.tabs').tabs();
+$('.sidenav').sidenav();
+$('.materialboxed').materialbox();
+$('.modal').modal();
+$('textarea#tx_contribution').characterCounter();
+$('select').formSelect();
+$("select[required]").css({display:"inline", height:0, padding:0, width:0});
+// $('.datepicker').datepicker({format: 'yyyy-mm-dd', parse: 'true'});
+$('.datepicker').datepicker({ 
+	firstDay: true, 
+	format: 'yyyy-mm-dd',
+	yearRange:  [2019,2030],
+	i18n: {
+		months: ["Janvier", "Février", "Mars", "Avril", "Mai", "Juin", "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décémbre"],
+		monthsShort: ["Jan", "Fev", "Mar", "Avr", "Mai", "Jui", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"],
+		weekdays: ["Dimanche","Lundi", "Mardi", "Mercredi", "Jeudi", "Vendredi", "Samedi"],
+		weekdaysShort: ["Dim","Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"],
+		weekdaysAbbrev: ["D","L", "M", "M", "J", "V", "S"],
+	}
+ });
+$('.parallax').parallax();
+$('.tooltipped').tooltip({delay: 50});
+$('.scrollspy').scrollSpy();
+$('.collapsible').collapsible();
+$(".dropdown-trigger").dropdown();
+
+// Fermer alert apres clic sur l'icon
+$("#card-alert .close").click(function(){$(this).closest("#card-alert").fadeOut("slow")});
+
+$(".resultats .collapsible li").first().addClass("active ");
+$(".resultats .collapsible-body").first().attr("style", "display:block");
+
+
+// control des checkboxes
+var requiredCheckboxes = $(':checkbox[required]');
+requiredCheckboxes.on('change', function(e) {
+var checkboxGroup = requiredCheckboxes.filter('[name="' + $(this).attr('name') + '"]');
+var isChecked = checkboxGroup.is(':checked'); checkboxGroup.prop('required', !isChecked);});
+  
+// supprimer affiche/cache boutton
+$("#deletItem").click(function(){$("#deleteLii").addClass("hide"); $("#deletok").removeClass("hide");});
+$("#cancel").click(function(){$("#deleteLii").removeClass("hide"); $("#deletok").addClass("hide"); })
+
+// les listes liées themes - rubriques
+function chargeRubrique(selectObj) {
+	var idx = selectObj.selectedIndex; 
+	var which = selectObj.options[idx].value;
+	var cSelect = document.getElementById("rubriquezone"); 
+	var len = cSelect.options.length;
+	while (cSelect.options.length > 0) { cSelect.remove(0); }
+	$.ajax({
+		headers: {
+			'X-CSRF-Token': '{{ csrf_token() }}',
+		},
+		url: '/fichesjson/'+ escape(which),
+		type: 'get',
+		success: function(data){
+			var fichesdata = data;
+			var newOption;
+			for (var i=0; i < fichesdata.length; i++){
+				newOption = document.createElement("option");
+				newOption.value = fichesdata[i].id;
+				newOption.text = fichesdata[i].designation;
+				try {cSelect.add(newOption);}
+				catch (e) {cSelect.appendChild(newOption);}
+			}$('select').formSelect();
+		}, 
+		error:function(data){
+
+		}, 
+	});
+}
+
+// les listes liées themes - rubriques
+function afficherRubriques(id,theme,nomtheme,espace) {
+	var cDiv = document.getElementById("rubriquezone"); 
+	document.getElementById("libtheme").innerHTML = nomtheme; 
+	$.ajax({
+		headers: {
+			'X-CSRF-Token': '{{ csrf_token() }}',
+		},
+		url: '/fichesjson/'+ escape(id),
+		type: 'get',
+		success: function(data){
+			var fichesdata = data;
+			var text = "";
+		if(fichesdata.length > 0){
+			for (var i=0; i < fichesdata.length; i++){
+				text += '<div class="section"><blockquote><a href="/'+ espace +'/'+ theme +'/'+ fichesdata[i].slug +'">' + fichesdata[i].designation +'</a></blockquote></div><div class="divider"></div>';
+			}
+			cDiv.innerHTML = text;
+		}
+		else {
+			cDiv.innerHTML = '<div class="section"><blockquote>Pas de rubrique pour le thème <b>'+ nomtheme +'</b></blockquote></div>';
+			}	
+		}  
+	});
+}
+
+function appercuProcedure(id) {
+	var cDiv = document.getElementById("appercu"); 
+	$.ajax({
+		headers: {
+			'X-CSRF-Token': '{{ csrf_token() }}',
+		},
+		url: '/appercujson/'+ escape(id),
+		type: 'get',
+		success: function(data){
+			if(data != null){
+				$('#appercus').removeClass('hide'); 
+				cDiv.innerHTML = '<dl class="dl-sta"><dt>Description :</dt><dd>'+ data.description +'</dd> <dt>Pièce(s) à fournir :</dt><dd>'+ data.designation +'</dd> <dt>Coût(s)  :</dt><dd>'+ data.cout +'</dd> <dt>Postulant(s) :</dt><dd>'+ data.designation +'</dd> <dt>Conditions d’accès :</dt><dd>'+ data.conditions_acces +'</dd> <dt>Lieu(x) de dépôt :</dt><dd>'+ data.designation +'</dd> <dt>Délai de traitement  :</dt><dd>'+ data.designation +'</dd> <dt>Informations complémentaires :</dt><dd>'+ data.designation +'</dd> <dl>';
+			}
+			else {
+				cDiv.innerHTML = '<div class="section"><blockquote>Impossible d\'afficher cette procédure</blockquote></div>';
+			}	
+		}  
+	});
+}
+
